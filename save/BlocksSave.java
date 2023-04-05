@@ -7,6 +7,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import main.Niveau;
+import blocks.Chunk;
+import blocks.chunkPos;
+import blocks.Air;
+import java.lang.Math;
 
 public class BlocksSave implements Save {
 
@@ -14,27 +18,28 @@ public class BlocksSave implements Save {
         BlocksSave save = new BlocksSave();
     }
 
-    public ArrayList<Block[][]> chunks;
-    public static String fileDir = "..\\game\\saves\\world";
-    private static File savefile = new File(fileDir + "\\chunks.s");
-    private static File annuairefile = new File(fileDir + "\\annuaire.s");
+    public ArrayList<Chunk> chunks;
+    public static String fileDir = "../game/saves/world";
+    private static File savefile = new File(fileDir + "/chunks.s");
+    private static File annuairefile = new File(fileDir + "/annuaire.s");
     private RandomAccessFile saveaccess;
     private RandomAccessFile annuaireaccess;
+    private static int MAX_INT_CHAR = (int) Math.pow(2, 16);
 
-    public BlocksSave(ArrayList<Block[][]> nchunks) {
+    public BlocksSave(ArrayList<Chunk> nchunks) {
         this.chunks = nchunks;
         constructorFacto();
     }
 
-    public BlocksSave(Block[][] chunk) {
-        ArrayList<Block[][]> arlb = new ArrayList<Block[][]>(1);
+    public BlocksSave(Chunk chunk) {
+        ArrayList<Chunk> arlb = new ArrayList<Chunk>(1);
         arlb.add(chunk);
         this.chunks = arlb;
         constructorFacto();
     }
 
     public BlocksSave(){
-        ArrayList<Block[][]> arlb = new ArrayList<Block[][]>(10);
+        ArrayList<Chunk> arlb = new ArrayList<Chunk>(10);
         this.chunks = arlb;
         constructorFacto();
         
@@ -80,52 +85,44 @@ public class BlocksSave implements Save {
    * @param c le chunk à sauver
    * @param blockref Le bloc de référence pour le chunk.
    */
-    private void ecritureChunk(Block[][] c, Block blockref) {
+    private void ecritureChunk(Chunk c) {
+        //System.out.println("Chunk à sauvegarder :" + Math.floorMod((int) c.pos.getX(), MAX_INT_CHAR) + ":" + Math.floorMod((int) c.pos.getY(), MAX_INT_CHAR));
         for (int k = 0; k < Niveau.CHUNKSIZE; k++) {
             for (int j = 0; j < Niveau.CHUNKSIZE; j++) {
-                Block bc = c[k][j];
-                if (bc != null) {
+                Block bc = c.chunk[k][j];
+                if (!(bc instanceof Air)) {
                     try {
                         saveaccess.writeByte(bc.getBlockID());
-                        saveaccess.writeByte(bc.getX() - blockref.getX());
-                        saveaccess.writeByte(bc.getY() - blockref.getY());
+                        saveaccess.writeByte(Math.floorMod(bc.getX(), Niveau.CHUNKSIZE));
+                        saveaccess.writeByte(Math.floorMod(bc.getY(), Niveau.CHUNKSIZE));
                     } catch (IOException e) {
                         System.out.println("Erreur enregistrement du block : " + bc);
                     }
                 } else {
                     try {
                         saveaccess.writeByte(0);
-                        saveaccess.writeByte(0);
-                        saveaccess.writeByte(0);
+                        saveaccess.writeByte(Math.floorMod(bc.getX(), Niveau.CHUNKSIZE));
+                        saveaccess.writeByte(Math.floorMod(bc.getY(), Niveau.CHUNKSIZE));
                     } catch (IOException e) {
                         System.out.println("Erreur enregistrement du block : null");
                     }
                 }
             }
         }
+        /* int cx = Math.floorMod((int) c.pos.getX(), MAX_INT_CHAR);
+        int cy = Math.floorMod((int) c.pos.getY(), MAX_INT_CHAR);
+        if (cx == MAX_INT_CHAR-1 && cy == 5) {
+            System.out.println("Déchargé");
+            for (int k = 0; k < Niveau.CHUNKSIZE; k++) {
+                for (int l = 0; l < Niveau.CHUNKSIZE; l++) {
+                    System.out.print(" " + c.chunk[k][l]);
+                }
+                System.out.println();
+            }
+            System.out.println();
+        } */
     }
 
-    private void ecritureChunkVide(){
-        try {
-            annuaireaccess.writeChar(0);
-            annuaireaccess.writeChar(0);
-            annuaireaccess.writeInt((int) savefile.length());
-        }
-        catch (IOException e){
-            System.out.println("Erreur écriture du chunk dans l'annuaire");
-        }
-        for (int k = 0; k < Niveau.CHUNKSIZE; k++) {
-            for (int j = 0; j < Niveau.CHUNKSIZE; j++) {
-                try {
-                    saveaccess.writeByte(0);
-                    saveaccess.writeByte(0);
-                    saveaccess.writeByte(0);
-                } catch (IOException e) {
-                    System.out.println("Erreur enregistrement du block : null");
-                }
-            }
-        }
-    }
 
     /**
      * Ecrit sur le disque la sauvegarde des chunks présent dans l'objet save.
@@ -141,30 +138,35 @@ public class BlocksSave implements Save {
             }
         }
         if(savefile.length() == 0){
-            int nsize = chunks.size()*8;
-            try {
-                annuaireaccess.writeInt(nsize);
-            }
-            catch (IOException e){
-                System.out.println("Erreur écriture de la taille de l'annuaire");
-            }
+            int wrtdChunks = 0;
             for(int i=0; i<chunks.size(); i++){
-                Block binst = chunks.get(i)[0][0];
-                if (binst != null){
-                    int cx = (int) binst.getX()/Niveau.CHUNKSIZE;
-                    int cy = (int) binst.getY()/Niveau.CHUNKSIZE;
+                Chunk c = chunks.get(i);
+                if(!c.vide){
+                    wrtdChunks += 1;
+                    int nsize = wrtdChunks;
                     try {
-                        annuaireaccess.writeChar(cx);
-                        annuaireaccess.writeChar(cy);
+                        annuaireaccess.seek(0);
+                        annuaireaccess.writeInt(nsize);
+                        annuaireaccess.seek(annuaireaccess.length());
+                    }
+                    catch (IOException e){
+                        System.out.println("Erreur écriture de la taille de l'annuaire");
+                    }
+                    try {
+                        annuaireaccess.writeChar(c.pos.getX());
+                        annuaireaccess.writeChar(c.pos.getY());
                         annuaireaccess.writeInt((int) savefile.length());
                     }
                     catch (IOException e){
                         System.out.println("Erreur écriture du chunk dans l'annuaire");
                     }
-                    ecritureChunk(chunks.get(i), binst);
-                }
-                else{
-                    ecritureChunkVide();
+                    try{
+                        saveaccess.seek(saveaccess.length());
+                    }
+                    catch(IOException e){
+                        System.out.println("Erreur de positionnement du flux de sauvegarde pour BlocksSave : " + e);
+                    }
+                    ecritureChunk(chunks.get(i));
                 }
             }
         }
@@ -177,24 +179,36 @@ public class BlocksSave implements Save {
                 for(int i=0; i<annuT; i++){
                     annu[i] = new int[] {annuaireaccess.readChar(),  annuaireaccess.readChar(),annuaireaccess.readInt()};
                 }
-                for(int i=0; i<chunks.size(); i++){
-                    Block binst = chunks.get(i)[0][0];
-                    int cx = (int) binst.getX()/Niveau.CHUNKSIZE;
-                    int cy = (int) binst.getY()/Niveau.CHUNKSIZE;
-                    boolean found = false;
-                    for(int j=0; j<annuT; j++){
-                        if(cx == annu[j][0] && cy == annu[j][1]){
-                            found = true;
-                            annuaireaccess.seek(annu[j][2]);
-                            ecritureChunk(chunks.get(i), binst);
+                for(Chunk chunk : chunks){
+                    if (!chunk.vide){
+                        boolean found = false;
+                        int cx = chunk.pos.getX();
+                        int cy = chunk.pos.getY();
+                        for(int j=0; j<annuT; j++){
+                            if(Math.floorMod(cx, MAX_INT_CHAR) == annu[j][0] && Math.floorMod(cy, MAX_INT_CHAR) == annu[j][1]){
+                                found = true;
+                                saveaccess.seek(annu[j][2]);
+                                ecritureChunk(chunk);
+                            }
+                        }                    
+                        if(!found){
+                            annuaireaccess.seek(0);
+                            int nbC = annuaireaccess.readInt();
+                            annuaireaccess.seek(0);
+                            annuaireaccess.writeInt(nbC + 1);
+                            annuaireaccess.seek(annuaireaccess.length());
+                            annuaireaccess.writeChar(cx);
+                            annuaireaccess.writeChar(cy);
+                            annuaireaccess.writeInt((int) savefile.length());
+                            try{
+                                saveaccess.seek(saveaccess.length());
+                            }
+                            catch(IOException e){
+                                System.out.println("Erreur de positionnement du flux de sauvegarde pour BlocksSave : " + e);
+                            }
+                            ecritureChunk(chunk);
+                            
                         }
-                    }
-                    if(!found){
-                        annuaireaccess.seek(annuaireaccess.length());
-                        annuaireaccess.writeChar(cx);
-                        annuaireaccess.writeChar(cy);
-                        annuaireaccess.writeInt((int) savefile.length());
-                        ecritureChunk(chunks.get(i), binst);
                     }
                 }
             }
@@ -218,16 +232,18 @@ public class BlocksSave implements Save {
                     int cx = annuaireaccess.readChar();
                     int cy = annuaireaccess.readChar();
                     int pos = annuaireaccess.readInt();
-                    Block[][] chunk = new Block[Niveau.CHUNKSIZE][Niveau.CHUNKSIZE];
+                    Chunk chunk = new Chunk(new Block[Niveau.CHUNKSIZE][Niveau.CHUNKSIZE],false);
                     try{
                         saveaccess.seek(pos);
-                        for (int l = 0; l<Math.pow(Niveau.CHUNKSIZE,2); l++){
-                            int id = saveaccess.readByte();
-                            int x = saveaccess.readByte();
-                            int y = saveaccess.readByte();
-                            Block b = Block.blockByID(x + cx, y + cy, id);
-                            chunk[x][y] = b;
-                            chunks.add(chunk);
+                        for(int k = 0; k<Niveau.CHUNKSIZE; k++){
+                            for(int l = 0; l<Niveau.CHUNKSIZE; l++){
+                                int id = saveaccess.readByte();
+                                int x = saveaccess.readByte();
+                                int y = saveaccess.readByte();
+                                Block b = Block.blockByID(x + cx*Niveau.CHUNKSIZE, y + cy*Niveau.CHUNKSIZE, id);
+                                chunk.chunk[k][l] = b;
+                                chunks.add(chunk);
+                            }
                         }
                     }
                     catch(IOException e){
@@ -248,24 +264,41 @@ public class BlocksSave implements Save {
      * @param param les coordonnées du morceau
      */
     public void updFromFile(double[] param){
+        /* if (param[0] == -1 && param[1] == 5) {System.out.println("Chargement en cours...");} */
         if (savefile.exists() && savefile.length() != 0){
             try{
                 annuaireaccess.seek(0);
                 int annuT = annuaireaccess.readInt();
+
+                boolean trouve = false;
+
+                //System.out.println("Chunk à charger :" + param[0] + ":" + param[1]);
+                //System.out.println("Chunk à charger :" + Math.floorMod((int) param[0], MAX_INT_CHAR) + ":" + Math.floorMod((int) param[1], MAX_INT_CHAR));
+                int j = 1;
                 for(int i=0; i<annuT; i++){
                     int cx = annuaireaccess.readChar();
                     int cy = annuaireaccess.readChar();
+
                     int pos = annuaireaccess.readInt();
-                    Block[][] chunk = new Block[Niveau.CHUNKSIZE][Niveau.CHUNKSIZE];
-                    if (cx == param[0] && cy == param[1]){
+                    Chunk chunk = new Chunk(new Block[Niveau.CHUNKSIZE][Niveau.CHUNKSIZE],false);
+                    if (cx == Math.floorMod((int) param[0], MAX_INT_CHAR) && cy == Math.floorMod((int) param[1], MAX_INT_CHAR)){
+                        trouve = true;
                         try{
                             saveaccess.seek(pos);
-                            for (int l = 0; l<Math.pow(Niveau.CHUNKSIZE,2); l++){
-                                int id = saveaccess.readByte();
-                                int x = saveaccess.readByte();
-                                int y = saveaccess.readByte();
-                                Block b = Block.blockByID(x + cx, y + cy, id);
-                                chunk[x][y] = b;
+                            for(int k = 0; k<Niveau.CHUNKSIZE; k++){
+                                for(int l = 0; l<Niveau.CHUNKSIZE; l++){
+                                    int id = saveaccess.readByte();
+                                    int x = saveaccess.readByte();
+                                    int y = saveaccess.readByte();
+                                    if (cx > MAX_INT_CHAR/2) {
+                                        cx = cx - MAX_INT_CHAR;
+                                    }
+                                    if (cy > MAX_INT_CHAR/2) {
+                                        cy = cy - MAX_INT_CHAR;
+                                    }
+                                    Block b = Block.blockByID(x + cx*Niveau.CHUNKSIZE, y + cy*Niveau.CHUNKSIZE, id);
+                                    chunk.chunk[k][l] = b;
+                                }
                             }
                         }
                         catch(IOException e){
@@ -274,7 +307,24 @@ public class BlocksSave implements Save {
                         finally{
                             chunks.add(chunk);
                         }
+
+                        /* if (param[0] == -1 && param[1] == 5) {
+                            System.out.println("Chargé");
+                            for (int k = 0; k < Niveau.CHUNKSIZE; k++) {
+                                for (int l = 0; l < Niveau.CHUNKSIZE; l++) {
+                                    System.out.print(" " + chunk.chunk[k][l]);
+                                }
+                                System.out.println();
+                            }
+                            System.out.println();
+                        } */
+
                     }
+                }
+                if (!trouve) {
+                    System.out.println("erreur pour retrouver le chunk");
+                } else {
+                    //System.out.println("chunk trouvé");
                 }
             }
             catch(IOException e){
