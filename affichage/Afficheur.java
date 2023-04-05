@@ -24,7 +24,7 @@ public class Afficheur {
         g.fillRect(0, 0, Fenetre.LARGEUR, Fenetre.HAUTEUR);
         try {
             Camera camera = CameraManager.getCamera();
-            g.drawImage(ImageIO.read(new File("sky2.png")),0,0,null);
+            g.drawImage(ImageIO.read(new File("sky.png")),0,0,null);
             
             
         }

@@ -5,7 +5,7 @@ import affichage.Sprite;
 public class Dirt extends Block {
     
     public Dirt(int x, int y) {
-        super(x, y,3);
+        super(x, y,3, 0.2);
     }
 
     @Override

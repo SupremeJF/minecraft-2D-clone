@@ -5,7 +5,7 @@ import affichage.Sprite;
 public class Iron extends Block {
     
     public Iron(int x, int y) {
-        super(x, y,4);
+        super(x, y,4, 0.5);
     }
 
     @Override

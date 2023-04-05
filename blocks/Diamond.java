@@ -5,7 +5,7 @@ import affichage.Sprite;
 public class Diamond extends Block {
     
     public Diamond(int x, int y) {
-        super(x, y,6);
+        super(x, y,6, 0.8);
     }
 
     @Override

@@ -5,7 +5,7 @@ import affichage.Sprite;
 public class Wood extends Block {
     
     public Wood(int x, int y) {
-        super(x, y,2);
+        super(x, y,8, 0.2);
     }
 
     @Override

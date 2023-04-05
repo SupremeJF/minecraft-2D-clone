@@ -5,7 +5,7 @@ import affichage.Sprite;
 public class Snow extends Block {
     
     public Snow(int x, int y) {
-        super(x, y,7);
+        super(x, y,7, 0.1);
     }
 
     @Override

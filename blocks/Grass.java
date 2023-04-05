@@ -5,7 +5,7 @@ import affichage.Sprite;
 public class Grass extends Block {
     
     public Grass(int x, int y) {
-        super(x, y,1);
+        super(x, y,1, 0.2);
     }
 
     @Override

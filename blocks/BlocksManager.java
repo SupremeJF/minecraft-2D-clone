@@ -8,42 +8,17 @@ import java.util.ArrayList;
 import main.Niveau;
 import save.*;
 import save.Saveable;
+import java.util.*;
 
 public class BlocksManager implements Affichable, Saveable {
-    public ArrayList<Chunk> generatedChunks = new ArrayList<Chunk>(100);
+    public ArrayList<chunkPos> generatedChunks = new ArrayList<chunkPos>(100);
     public PlanMap<Block> blocks;
+
+    private Map<Integer, Integer> ligneDeNiveau = new HashMap<>();
 
     public BlocksManager(){
         blocks = new PlanMap<>();
-        generateWorld();
-        generatedChunks.add(new Chunk(0,0));
-        generatedChunks.add(new Chunk(0,1));
-        generatedChunks.add(new Chunk(0,2));
-        generatedChunks.add(new Chunk(0,3));
-        generatedChunks.add(new Chunk(1,1));
-        generatedChunks.add(new Chunk(1,2));
-        generatedChunks.add(new Chunk(1,3));
-        generatedChunks.add(new Chunk(2,1));
-        generatedChunks.add(new Chunk(2,2));
-        generatedChunks.add(new Chunk(2,3));
-        generatedChunks.add(new Chunk(3,1));
-        generatedChunks.add(new Chunk(3,2));
-        generatedChunks.add(new Chunk(3,3));
-        
-        generatedChunks.add(new Chunk(0,0));
-        generatedChunks.add(new Chunk(0,-1));
-        generatedChunks.add(new Chunk(0,-2));
-        generatedChunks.add(new Chunk(0,-3));
-        generatedChunks.add(new Chunk(-1,-1));
-        generatedChunks.add(new Chunk(-1,-2));
-        generatedChunks.add(new Chunk(-1,-3));
-        generatedChunks.add(new Chunk(-2,-1));
-        generatedChunks.add(new Chunk(-2,-2));
-        generatedChunks.add(new Chunk(-2,-3));
-        generatedChunks.add(new Chunk(-3,-1));
-        generatedChunks.add(new Chunk(-3,-2));
-        generatedChunks.add(new Chunk(-3,-3));
-
+        //generateWorld();
     }
     
     public void afficher() {
@@ -58,21 +33,57 @@ public class BlocksManager implements Affichable, Saveable {
         }
     }
 
-    private void generateWorld(){
-        for (int y = 0; y < Camera.HAUTEUR; y++) {
-            for (int x = 0; x < Camera.LARGEUR; x++) {
+    private void generateChunk(chunkPos chunk) {
+        int x_bloc = Niveau.CHUNKSIZE * chunk.getX();
+        int y_bloc = Niveau.CHUNKSIZE * chunk.getY();
+
+        if (!ligneDeNiveau.containsKey(x_bloc)) {
+            try {
+                if (x_bloc < Collections.min(ligneDeNiveau.keySet())) {
+                    for (int x = x_bloc+Niveau.CHUNKSIZE-1; x >= x_bloc; x--) {
+                        setLigneDeNiveau(x);
+                    }
+                } else {
+                    for (int x = x_bloc; x < x_bloc+Niveau.CHUNKSIZE; x++) {
+                        setLigneDeNiveau(x);
+                    }
+                }
+            } catch (NoSuchElementException e) {
+                for (int x = x_bloc; x < x_bloc+Niveau.CHUNKSIZE; x++) {
+                    setLigneDeNiveau(x);
+                }
+            }
+        }
+
+        for (int y = y_bloc; y < y_bloc+Niveau.CHUNKSIZE; y++) {
+            for (int x = x_bloc; x < x_bloc+Niveau.CHUNKSIZE; x++) {
+                if (y >= getLigneDeNiveau(x)) {
+                    blocks.put(x, y, a_placer(x, y));
+                }         
+            }
+        }
+        generatedChunks.add(chunk);
+    }
+
+    /* private void generateChunk_Vieux(chunkPos chunk) {
+        int x_bloc = Niveau.CHUNKSIZE * chunk.getX();
+        int y_bloc = Niveau.CHUNKSIZE * chunk.getY();
+        for (int y = y_bloc; y < y_bloc+Niveau.CHUNKSIZE; y++) {
+            for (int x = x_bloc; x < x_bloc+Niveau.CHUNKSIZE; x++) {
                 boolean placable = placable(x,y);
                 if (placable){
                     blocks.put(x, y, a_placer(x,y));
                 }              
             }
         }
+        generatedChunks.add(chunk);
     }
+ */
 
     private Block a_placer(int x, int y) {
         int random = (int) (Math.random()*200);
         //Cas sans blocs au dessus
-        if (blocks.get(x, y-1) ==null){
+        if (y == getLigneDeNiveau(x)){
             if (random<35){
                 genererArbre(x,y-1);
             }
@@ -85,7 +96,7 @@ public class BlocksManager implements Affichable, Saveable {
            
         }
         //Couche moyenne charbon + fer 
-        else if (y > 21 && y<=30) {
+        else if (y > 21 && y<=25) {
             if (random<170){
                 return new Stone(x, y);
             }          
@@ -108,31 +119,26 @@ public class BlocksManager implements Affichable, Saveable {
             else{
                 return new Iron(x,y);
             }
-
+        }
+        else if (y > 46) {
+            return new Bedrock(x, y);
         }
         else if (y >=1) {
-            try {
-                if(blocks.get(x, y-5) ==null){
-                    return new Dirt(x, y);
+            if(blocks.get(x, y-5) ==null){
+                return new Dirt(x, y);
+            }
+            else{
+                if(random<180){
+                    return new Stone(x,y);
                 }
                 else{
-                    if(random<180){
-                        return new Stone(x,y);
-                    }
-                    else{
-                        return new Coal(x,y);
-                    }
+                    return new Coal(x,y);
                 }
-                
-            } catch (ArrayIndexOutOfBoundsException e) {
-                return new Dirt(x,y);
             }
-                
         }
         
         return null;
     }
-
 
     private void genererArbre(int x, int y) {
         blocks.put(x, y, new Wood(x,y));
@@ -149,7 +155,44 @@ public class BlocksManager implements Affichable, Saveable {
 
     }
 
-    private boolean placable(int x, int y) {
+    private int getLigneDeNiveau(int x) {
+        //long seed = 123456;
+        //Random randomGenerator = new Random(seed);
+        //int random = randomGenerator.nextInt() *200 ;
+        if (ligneDeNiveau.containsKey(x)) {
+            return ligneDeNiveau.get(x);
+        } else {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    private void setLigneDeNiveau(int x) {
+        boolean placable = false;
+        for (int y = 5; y <= 23 && !placable; y++) {
+
+            int random = (int) (Math.random()*200);
+
+            if (y==23){
+                placable  = true;
+            }            
+            else if (y >= getLigneDeNiveau(x-1) || y >= getLigneDeNiveau(x+1)){
+                placable=random <150; 
+            }
+            else if (y <=17 && y>5){
+                placable = random<2;
+            }
+            else if (y<23 && y>15){
+                    placable=random<5;
+            }
+
+            if (placable) {
+                ligneDeNiveau.put(x, y);   
+                //System.out.println(y);
+            }
+        }
+    }
+
+    /* private boolean placable(int x, int y) {
         //long seed = 123456;
         //Random randomGenerator = new Random(seed);
         //int random = randomGenerator.nextInt() *200 ;
@@ -177,7 +220,7 @@ public class BlocksManager implements Affichable, Saveable {
             
         }
         return placable; 
-    }
+    } */
 
                 
 
@@ -202,26 +245,26 @@ public class BlocksManager implements Affichable, Saveable {
         return block;
     }
 
-    public void cgChunk(ArrayList<Chunk> nChunks, ArrayList<Chunk> aChunks){
-        for(int i = 0; i<nChunks.size(); i++){ //nChunks étant les chunk à charger ou générer 
+    public void cgChunk(ArrayList<chunkPos> nChunks, ArrayList<chunkPos> aChunks){
+        for(chunkPos chunk : nChunks){ //nChunks étant les chunk à charger ou générer 
             //System.out.println("nChunks : " + nChunks.get(i)[0] + " " + nChunks.get(i)[1]);
-            if (generatedChunks.contains(nChunks.get(i))) {
+            if (generatedChunks.contains(chunk)) {
             //if(true){ 
-                System.out.println("TEEEEZST");
+                //System.out.println("TEEEEZST");
                 BlocksSave cs = new BlocksSave();
                 
-                cs.updFromFile(nChunks.get(i).toDouble());
+                cs.updFromFile(chunk.toDouble());
                 this.load(cs);
             }
             else{
-                //generateChunk(nChunks.get(i));
+                generateChunk(chunk);
             }
         }
-        for(int i = 0; i<aChunks.size(); i++){
-            BlocksSave as = (BlocksSave) this.save(aChunks.get(i).toDouble());
+        for(chunkPos chunk : aChunks){
+            BlocksSave as = (BlocksSave) this.save(chunk.toDouble());
             as.saveToFile();
         }
-    }
+    } 
 
     public Save save() {
         return null;
@@ -232,37 +275,44 @@ public class BlocksManager implements Affichable, Saveable {
             return;
         }
         else{
-            for (Block[][] chunk : ((BlocksSave) s).chunks) {
+            for (Chunk chunk : ((BlocksSave) s).chunks) {
                 for (int i = 0; i < Niveau.CHUNKSIZE; i++) {
                     for (int j = 0; j < Niveau.CHUNKSIZE; j++) {
-                        blocks.put(i, j, chunk[i][j]);
+                        if (chunk.chunk[i][j] instanceof Air) {
+                            blocks.put(chunk.chunk[i][j].getX(),chunk.chunk[i][j].getY(),null);
+                        }
+                        else if(chunk.chunk[i][j] != null) {
+                            blocks.put(chunk.chunk[i][j].getX(), chunk.chunk[i][j].getY(), chunk.chunk[i][j]);
+                        }
                     }
                 }
-                //generatedChunks.add(chunk);
             }
         }
-    }
+    } 
 
     /* param : coordonnées du chunk à sauvegarder */
     public Save save(double[] param) {
         return new BlocksSave(extractChunk((int) param[0],(int) param[1]));
-    }
+    } 
 
     /* Les blocs du chunks d'indice x, y 
     retire aussi les blocs du mapping de blocs */
-    public Block[][] extractChunk(int x, int y) {
-        Block[][] chunk = new Block[Niveau.CHUNKSIZE][Niveau.CHUNKSIZE];
+    public Chunk extractChunk(int x, int y) {
+        Block[][] archunk = new Block[Niveau.CHUNKSIZE][Niveau.CHUNKSIZE];
         for (int i = 0; i < Niveau.CHUNKSIZE; i++) {
             for (int j = 0; j < Niveau.CHUNKSIZE; j++) {
                 int xBlock = x*Niveau.CHUNKSIZE + i;
                 int yBlock = y*Niveau.CHUNKSIZE + j;
-                chunk[i][j] = blocks.get(xBlock, yBlock);
                 if (blocks.get(xBlock, yBlock) != null){
+                    archunk[i][j] = blocks.get(xBlock, yBlock);
                     blocks.remove(xBlock, yBlock);
+                }
+                else{
+                    archunk[i][j] = new Air(xBlock,yBlock);
                 }
             }
         }
-        return chunk;
+        return new Chunk(archunk);
     }
 
 }

@@ -5,7 +5,7 @@ import affichage.Sprite;
 public class Coal extends Block {
     
     public Coal(int x, int y) {
-        super(x, y,5);
+        super(x, y,5, 0.4);
     }
 
     @Override

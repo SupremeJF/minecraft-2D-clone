@@ -4,7 +4,7 @@ import affichage.Sprite;
 public class Air extends Block {
 
     public Air(int x, int y) {
-        super(x, y,false, 0);
+        super(x, y,false, 0, 1);
     }
 
     @Override 

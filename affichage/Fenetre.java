@@ -9,10 +9,10 @@ import java.awt.Dimension;
 public class Fenetre extends Canvas {
     
     /* La largeur de la fenêtre */
-    public static final int LARGEUR = 800;
+    public static final int LARGEUR = 1400;
 
     /* La hauteur de la fenêtre */
-    public static final int HAUTEUR = 600;
+    public static final int HAUTEUR = 800;
 
     /* Le titre de la fenêtre */
     public static final String NOM = "Minecraft 2D - v1";

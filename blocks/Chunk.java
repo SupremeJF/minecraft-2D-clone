@@ -1,25 +1,56 @@
 package blocks;
 
+import main.Niveau;
+import java.lang.Math;
+
 public class Chunk {
+
+    public Block[][] chunk;
+    public chunkPos pos;
+    public boolean vide = false;
     
-    double cx;
-    double cy;
-
-    public Chunk(double cx, double cy) {
-        this.cx = cx;
-        this.cy = cy;
+    public Chunk(Block[][] chunk, chunkPos pos) {
+        this.chunk = chunk;
+        this.pos = pos;
     }
 
-    @Override 
-    public boolean equals(Object o){
-        if(o instanceof Chunk){
-            Chunk c = (Chunk) o;
-            return c.cx == this.cx && c.cy == this.cy;
+    public Chunk(Block[][] chunk) {
+        this.chunk = chunk;
+        int cx;
+        int cy;
+        this.vide = true;
+        for(int i = 0; i < Niveau.CHUNKSIZE; i++) {
+            for(int j = 0; j < Niveau.CHUNKSIZE; j++) {
+                if  (chunk[i][j] != null){
+                    cx = Math.floorDiv(chunk[i][j].getX(), Niveau.CHUNKSIZE);
+                    cy = Math.floorDiv(chunk[i][j].getY(), Niveau.CHUNKSIZE);
+                    this.pos = new chunkPos(cx,cy);
+                    this.vide = false;
+                    break;
+                }
+            }
         }
-        return false;
     }
 
-    public double[] toDouble() {
-        return new double[]{cx, cy};
+    public Chunk(Block[][] chunk,boolean isVide) {
+        this.chunk = chunk;
+        this.vide = isVide;
+        int cx;
+        int cy;
+        for(int i = 0; i < Niveau.CHUNKSIZE; i++) {
+            for(int j = 0; j < Niveau.CHUNKSIZE; j++) {
+                if (chunk[i][j] != null){
+                    cx = Math.floorDiv(chunk[i][j].getX(), Niveau.CHUNKSIZE);
+                    cy = Math.floorDiv(chunk[i][j].getY(), Niveau.CHUNKSIZE);
+                    this.pos = new chunkPos(cx,cy);
+                    break;
+                }
+            }
+        }
     }
+
+    public void setPos(chunkPos pos) {
+        this.pos = pos;
+    }
+
 }

@@ -7,7 +7,7 @@ import affichage.Sprite;
 public class Leaf extends Block {
     
     public Leaf(int x, int y) {
-        super(x, y,false,2);
+        super(x, y,false,9, 0);
     }
 
     @Override

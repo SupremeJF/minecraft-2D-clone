@@ -2,19 +2,19 @@ package blocks;
 
 import affichage.Sprite;
 
-public class Stone extends Block {
+public class Bedrock extends Block {
     
-    public Stone(int x, int y) {
-        super(x, y,2, 0.3);
+    public Bedrock(int x, int y) {
+        super(x, y, 3, 10e10);
     }
 
     @Override
     public Block newItem(int x, int y) {
-        return new Stone(x, y);
+        return new Bedrock(x, y);
     }
 
     @Override
     public Sprite getSprite() {
-        return Sprite.stone;
+        return Sprite.bedrock;
     }
 }
