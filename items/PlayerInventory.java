@@ -5,25 +5,26 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
+import affichage.Camera;
+import affichage.CameraManager;
 import affichage.Sprite;
 import blocks.*;
 import main.Niveau;
+import utils.Point;
+import unites.Joueur;
 
 
 public class PlayerInventory extends Inventory {
 
     private int maxSizeBarre;
     private int currentIndex;
+    private Joueur joueur;
 
-    public PlayerInventory() {
+    public PlayerInventory(Joueur j) {
         super(32);  
         this.maxSizeBarre = 8;
         this.currentIndex = 0;
-
-        // pour tester
-        this.addInventoryItem(new InventoryItem(new Coal(0, 0), 5));
-        this.addInventoryItem(new InventoryItem(new Grass(0, 0), 5));
-        this.addInventoryItem(new InventoryItem(new Dirt(0, 0), 5));
+        this.joueur = j;
     }
 
     public int getMaxSizeBarre() {
@@ -34,21 +35,6 @@ public class PlayerInventory extends Inventory {
         return currentIndex;
     }
 
-    public PlayerInventory getInventoryBarre() {
-        PlayerInventory inventoryBarre = new PlayerInventory();
-        for (int i = 0; i < this.maxSizeBarre; i++) {
-            inventoryBarre.addInventoryItem(this.getInventoryItem(i));
-        }
-        return inventoryBarre;
-    }
-
-    public PlayerInventory getInventoryReste() {
-        PlayerInventory inventoryReste = new PlayerInventory();
-        for (int i = this.maxSizeBarre; i < this.maxSizeInventory; i++) {
-            inventoryReste.addInventoryItem(this.getInventoryItem(i));
-        }
-        return inventoryReste;
-    }
 
     public void update(int currentIndex) {
         this.currentIndex = currentIndex;
@@ -74,8 +60,36 @@ public class PlayerInventory extends Inventory {
 
                 // Affichage de la quantité
                 g.setColor(Color.WHITE);
-                g.drawString(this.items[i].getQuantity() + "", r.getBounds().x + 30, r.getBounds().y + 30);
+                g.drawString(this.items[i].getQuantity() + "", r.getBounds().x + 30, r.getBounds().y + 30);                
             }
+        }
+
+        // Affichage de l'item sélectionné au centre de l'écran
+
+        if (this.items[currentIndex] != null) {
+
+            Point pos = this.joueur.H.getPosition();
+            Camera camera = CameraManager.getCamera();
+            double d_cam_x = (pos.getX()-camera.getX())*16;
+            double d_cam_Y = (pos.getY()-camera.getY())*16;
+
+            // Affichage de l'item
+            int dxObjet;
+            int dyObjet;
+
+            if (this.joueur.isLookingRight()) {
+                dxObjet = (int) (d_cam_x + 5);
+                dyObjet = (int) (d_cam_Y + 5);
+            }
+            else {
+                dxObjet = (int) (d_cam_x - 12);
+                dyObjet = (int) (d_cam_Y + 5);
+            }
+
+            BufferedImage image = this.items[currentIndex].getItem().getSprite().getImage();
+            BufferedImage scaled = Sprite.scaleImage(image, 0.5f);
+            Niveau.afficheur.g.drawImage(scaled, dxObjet, dyObjet ,null);
+
         }
     }
 }

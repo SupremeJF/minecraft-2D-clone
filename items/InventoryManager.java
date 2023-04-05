@@ -7,6 +7,7 @@ import java.awt.Rectangle;
 import java.util.HashMap;
 
 import affichage.Affichable;
+import unites.Joueur;
 
 
 public class InventoryManager implements Affichable {
@@ -18,9 +19,8 @@ public class InventoryManager implements Affichable {
     private int selectedIndex;
     private HashMap<Rectangle, Integer> rectangleToIndex;
 
-
-    public InventoryManager(Niveau niveau) {
-        this.playerInventory = new PlayerInventory();
+    public InventoryManager(Niveau niveau, Joueur joueur) {
+        this.playerInventory = new PlayerInventory(joueur);
         this.mouseInventory = new MouseInventory(niveau);
         this.inventoryWindow = new InventoryWindow(playerInventory);
         this.rectangleToIndex = new HashMap<Rectangle, Integer>();
@@ -52,7 +52,6 @@ public class InventoryManager implements Affichable {
         currentIndex = niveau.mouse.scroll;
 
         if (niveau.keyboard.isKeyDown(Key.OpenInventory)) {
-            System.out.println("OpenInventory from manager");
             this.inventoryWindow.setOpen(!this.inventoryWindow.isOpen());
         }
 

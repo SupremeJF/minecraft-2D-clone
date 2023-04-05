@@ -31,7 +31,7 @@ public abstract class Inventory implements Affichable {
 
     public void addInventoryItem(InventoryItem item) {
 
-        if (ownItem(item.getItem())) {
+        if (ownItem(item.getItem()) && item.getItem().estStackable()) {
             for (int i = 0; i < this.maxSizeInventory; i++) {
                 if (this.items[i] != null && this.items[i].getItem().getClass() == item.getItem().getClass()) {
                     int previousQuantity = this.items[i].getQuantity();
@@ -41,11 +41,15 @@ public abstract class Inventory implements Affichable {
             }
         } else {
             if (currentSize < maxSizeInventory) {
-                items[currentSize] = item;
-                currentSize++;
+                for (int i = 0; i < this.maxSizeInventory; i++) {
+                    if (this.items[i] == null) {
+                        this.items[i] = item;
+                        this.currentSize++;
+                        return;
+                    }
+                }
             }
         }
-
     }
 
     public void removeInventoryItem(int index) {
@@ -63,7 +67,7 @@ public abstract class Inventory implements Affichable {
     }
 
     public int getIndex(InventoryItem selectedItem) {
-        for (int i = 0; i < currentSize; i++) {
+        for (int i = 0; i <= currentSize; i++) {
             if (items[i] == selectedItem) {
                 return i;
             }
@@ -72,11 +76,15 @@ public abstract class Inventory implements Affichable {
     }
 
     public void decrementQuantity(int index) {
-        if(items[index].getQuantity() > 1) {
-            items[index].removeQuantity(1);
-        }
-        else {
-            removeInventoryItem(index);
+        try {
+            if(items[index].getQuantity() > 1) {
+                items[index].removeQuantity(1);
+            }
+            else {
+                removeInventoryItem(index);
+            }
+        } catch (Exception e) {
+            System.out.println("Erreur de decrementQuantity");
         }
     }
 
