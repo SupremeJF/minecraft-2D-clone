@@ -1,89 +1,118 @@
 package main;
 
-import affichage.*;
-import sound.*;
+import javax.swing.*;
 
+import achievements.Achievement;
+import achievements.AchievementManager;
+import achievements.FenetreAchievement;
 
-public class Main implements Runnable {
+import java.awt.*;
+import java.awt.event.*;
+
+public class Main {
     
-    Fenetre fenetre;
+    private JFrame frame;
+    private JPanel panel;
+    private JButton startButton;
+    private JButton quitButton;
+    private JButton achievementsButton;
 
-    Afficheur afficheur;
+    // Selecteur de texture
+    private JComboBox<String> textureSelector;
 
-    /* Le niveau gérant tout les composants du jeu */
-    private Niveau niveau;
-
-    /* Les entrées clavier-souris du joueur */
-    Keyboard keyboard;
-    Mouse mouse;
+    // Selecteur de mode de jeu
+    private JComboBox<String> modeSelector;
 
     public Main() {
+        
+        frame = new JFrame("Main Menu");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(1600, 1200);
+        frame.setResizable(false);
 
-        keyboard = new Keyboard();
-        mouse = new Mouse();
-        fenetre = new Fenetre();
-        afficheur = new Afficheur(fenetre);
-        niveau = new Niveau(keyboard, mouse, afficheur);
+        panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        
+        // Boutons
+        JPanel boutons = new JPanel();
+        boutons.setLayout(new GridLayout(0, 1));
+        startButton = new JButton("Start");
+        quitButton = new JButton("Quit");
+        achievementsButton = new JButton("Achievements");
+        boutons.add(achievementsButton);
+        boutons.add(startButton);
+        boutons.add(quitButton);
 
-        /* Le canva reçoit les entrées clavier-souris */
-        fenetre.addKeyListener(keyboard);
-        fenetre.addMouseListener(mouse);
-        fenetre.addMouseMotionListener(mouse);
-        fenetre.addMouseWheelListener(mouse);
-    }
 
-    /* Lance le thread permettant de démarrer le jeu */
-    public synchronized void start() {
-        Thread thread = new Thread(this);
-        thread.start();
-        Music.loop();
-    }
+        // Choix des textures
+        JPanel texturePanel = new JPanel();
+        texturePanel.setLayout(new FlowLayout());
+        JLabel textureLabel = new JLabel("Texture : ");
+        textureSelector = new JComboBox<String>();
+        textureSelector.addItem("classique");
+        textureSelector.addItem("simple");
+        texturePanel.add(textureLabel);
+        texturePanel.add(textureSelector);
 
-    /* La boucle de jeu met à jour la logique interne du niveau de manière régulière puis l'affiche dans la fenêtre */
-    public void run() {
-        long lastTime = System.nanoTime();
-        double nsPerTick = 1000000000D / 60D;
-        double delta = 0;
+        // Choix du mode de jeu
+        JPanel modePanel = new JPanel();
+        modePanel.setLayout(new FlowLayout());
+        JLabel modeLabel = new JLabel("Mode de jeu : ");
+        modeSelector = new JComboBox<String>();
+        modeSelector.addItem("classique");
+        modeSelector.addItem("decouverte");
+        modePanel.add(modeLabel);
+        modePanel.add(modeSelector);
 
-        while (true) {
-            long now = System.nanoTime();
-            delta += (now - lastTime) / nsPerTick;
-            lastTime = now;
 
-            while (delta >= 1) {
-                delta--;
-                maj();
+        // Ajout des composants
+        panel.add(boutons, BorderLayout.SOUTH);
+        panel.add(texturePanel, BorderLayout.CENTER);
+        panel.add(modePanel, BorderLayout.NORTH);
+
+        // Panel
+        frame.add(panel);
+
+        frame.pack();
+        frame.setVisible(true);
+
+        // Click sur le bouton start
+        startButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                // On récupère le mode de jeu
+                String mode = modeSelector.getSelectedItem().toString();
+
+                // On récupère la texture
+                String texture = textureSelector.getSelectedItem().toString();
+
+                // On lance le jeu
+                Game.main(new String[] {mode, texture});
+
+                // On ferme la fenêtre
+                frame.dispose();
+
             }
+        });
 
-            afficher();
-        }
+        // Click sur le bouton quit
+        quitButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+
+        // Click sur le bouton achievements
+        achievementsButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                new FenetreAchievement(AchievementManager.getAchievementsToDisplay());
+            }
+        });
+
     }
 
-    /* Met à jour la logique interne du niveau */
-    public void maj() {
-
-        // Mise à jour des entrées clavier
-        keyboard.maj();
-        mouse.maj();
-
-        // Mise à jour du niveau
-        niveau.maj();
-    } 
-
-    /* Affiche le niveau dans la fenêtre */
-    public void afficher() {
-        fenetre.setup();
-        afficheur.setUp();
-
-        niveau.afficher();
-
-        afficheur.cleanUp();
-        fenetre.afficher();
-    }
-
-    /* Lance le jeu */
     public static void main(String[] args) {
-        Main game = new Main();
-        game.start();
+        new Main();
     }
+
 }

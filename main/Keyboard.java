@@ -17,9 +17,6 @@ public class Keyboard implements KeyListener {
     }
 
     public void maj() {
-        if (keysReleased[73]) {
-            System.out.println("OpenInventory from keyboard");
-        }
         for (int i = 0; i < NUM_KEYS; i++) {
             keysPressed[i] = keys[i] && !keysLast[i];
             keysReleased[i] = !keys[i] && keysLast[i];
