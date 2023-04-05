@@ -18,7 +18,7 @@ public abstract class Unite implements Affichable, Collisionnable, hasHealth {
 
     public static double gd = 0.2; //déplacement selon y de la gravité à chaque tick (à intégrer différement)
 
-    protected rectanglehitbox H;
+    public rectanglehitbox H;
     private Vecteur vitesse; //vitesse de l'unite (en block/tick)(ce qui corréspond donc aussi au déplacement de l'unite pour le prochain tick)
     private Controleur controle;
     protected double x, y; //position de l'unite
@@ -99,12 +99,35 @@ public abstract class Unite implements Affichable, Collisionnable, hasHealth {
         Color.BLACK);
 
         // Afficher les points de vie
-        Niveau.afficheur.drawRect(pos.getX()-H.getLargeur()/2,
+        /*Niveau.afficheur.drawRect(pos.getX()-H.getLargeur()/2,
         pos.getY()-H.getHauteur()/2,
         H.getLargeur()*health/maxHealth,
         H.getHauteur()/10,
-        Color.GREEN);
+        Color.GREEN);*/
+        afficherVie(pos);
     }
+    //afficher les points de vie d'un joueur
+
+    public void afficherVie(Point pos){
+        double rapport_vie= (double)this.health/this.maxHealth;
+        Color couleur;
+        if(rapport_vie <=0.25)
+            couleur = Color.red;
+        else if(rapport_vie<=0.50){
+            couleur = Color.orange;
+        }
+        else{
+            couleur = Color.green;
+        }
+        
+        Niveau.afficheur.drawRect(pos.getX()-H.getLargeur()/2,
+        pos.getY()-H.getHauteur()/2 -0.3,
+        H.getLargeur()*health/maxHealth,
+        H.getHauteur()/10,
+        couleur);
+    }
+
+
 
     public Point getPosition() {
         return new Point(x, y);
@@ -160,7 +183,9 @@ public abstract class Unite implements Affichable, Collisionnable, hasHealth {
     }
 
     public void addHealth(int health) {
-        this.health += health;
+        if(this.health+health <=this.maxHealth){
+            this.health += health;
+        }
     }
 
     public boolean isAlive() {

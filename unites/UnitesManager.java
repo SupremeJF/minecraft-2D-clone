@@ -23,16 +23,25 @@ public class UnitesManager implements Affichable {
         unites.add(joueur);
         this.blocks = blocks;
 
-        unites.add(new unites.MonstreTest(30, 0));
+        //unites.add(new unites.MonstreTest(30, 0));
+        unites.add(new unites.Monstre(20,0,1,2,"unites/creep.png"));
+        unites.add(new unites.Monstre(30,0,1,3,"unites/moeil.png"));
     }
 
-   /**
+    /**
     * Pour chaque unite de la liste des unites, met à jour l'unite.
-    * 
     * @param niveau L'objet de niveau.
     * @param keyboard L'objet clavier.
     */
     public void maj(Niveau niveau, Keyboard keyboard) {
+        double random1 = Math.random()*1800;
+        
+        if (random1 <= 1){
+            unites.add(new unites.Monstre(Math.random()*80+joueur.getPosition().getX() -40,0,1,2,"unites/creep.png"));
+        }
+        else if(random1<=2){
+            unites.add(new unites.Monstre(Math.random()*80+joueur.getPosition().getX() -40,0,1,3,"unites/moeil.png"));
+        }
         for (Unite unite : unites) {
             unite.maj(blocks, keyboard);
         }
@@ -72,6 +81,14 @@ public class UnitesManager implements Affichable {
             }
         }
         return null;
+    }
+
+    /** 
+     * Supprime l'unité de la liste des unites
+     * @param u L'unité à supprimer
+     */
+    public void supprime(Unite u){
+        unites.remove(u);
     }
 
     /**

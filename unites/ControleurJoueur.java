@@ -23,7 +23,6 @@ public class ControleurJoueur implements Controleur {
         }
         if (keyboard.isKeyDown(Key.UP)) {
             if (joueur.isOnGround()) {
-                System.out.print("sur sol");
                 v.addv(new Vecteur(0, -jump));
             }
             else {
